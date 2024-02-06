@@ -32,6 +32,12 @@ from BTVNanoCommissioning.workflows.ctag_eWc_valid_sf import (
 from BTVNanoCommissioning.workflows.ctag_Wc_valid_sf import (
     NanoProcessor as CTAGWcValidSFProcessor,
 )
+from BTVNanoCommissioning.workflows.myctag_eWc_valid_sf import (
+    NanoProcessor as MYCTAGeWcValidSFProcessor,
+)
+from BTVNanoCommissioning.workflows.myctag_Wc_valid_sf import (
+    NanoProcessor as MYCTAGWcValidSFProcessor,
+)
 from BTVNanoCommissioning.workflows.ctag_DY_valid_sf import (
     NanoProcessor as CTAGDYValidSFProcessor,
 )
@@ -73,6 +79,8 @@ workflows["ectag_ttsemilep_sf"] = CTAGETTSemilepValidSFProcessor
 # W+c
 workflows["ctag_Wc_sf"] = CTAGWcValidSFProcessor
 workflows["ectag_Wc_sf"] = CTAGeWcValidSFProcessor
+workflows["myctag_Wc_sf"] = MYCTAGWcValidSFProcessor
+workflows["myctag_eWc_sf"] = MYCTAGeWcValidSFProcessor
 
 # DY
 workflows["ctag_DY_sf"] = CTAGDYValidSFProcessor

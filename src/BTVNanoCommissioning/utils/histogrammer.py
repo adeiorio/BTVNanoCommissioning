@@ -294,6 +294,18 @@ def histogrammer(events, workflow):
             syst_axis, osss_axis, n_axis, Hist.storage.Weight()
         )
         for obj in obj_list:
+            if "mujet" in obj:
+                c_algos = ["DeepFlav", "RobustParTAK4", "PNet"]
+                c_WPs = ["L", "M", "T"]
+                for c_algo in c_algos:
+                    for c_WP in c_WPs:
+                        _hist_dict[f"{obj}_pt_{c_algo}{c_WP}"] = Hist.Hist(
+                            syst_axis,
+                            flav_axis,
+                            osss_axis,
+                            jpt_axis,
+                            Hist.storage.Weight(),
+                        )
             if "jet" in obj or "soft_l" in obj:
                 if obj == "soft_l":
                     _hist_dict["soft_l_pt"] = Hist.Hist(
@@ -357,6 +369,12 @@ def histogrammer(events, workflow):
             )
     ### discriminators
     disc_list = [
+        "btagDeepB",
+        "btagDeepC",
+        "btagDeepB_b",
+        "btagDeepB_bb",
+        "btagDeepCvL",
+        "btagDeepCvB",
         "btagDeepFlavB",
         "btagDeepFlavC",
         "btagTransDeepFlavB",

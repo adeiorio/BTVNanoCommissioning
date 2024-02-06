@@ -53,7 +53,6 @@ def load_SF(campaign, syst=False):
                         ext = extractor()
                         ext.add_weight_sets([f"* * {filename}"])
                         ext.finalize()
-                        #correction_map["PU"] = ext.make_evaluator()["PU"]
                         correction_map["PU"] = ext.make_evaluator()
         ## btag weight
         elif SF == "BTV":
@@ -92,9 +91,9 @@ def load_SF(campaign, syst=False):
                     ) as filename:
                         if "B" in tagger:
                             if filename.endswith(".json.gz"):
-                                correction_map[
-                                    "btag"
-                                ] = correctionlib.CorrectionSet.from_file(filename)
+                                correction_map["btag"] = (
+                                    correctionlib.CorrectionSet.from_file(filename)
+                                )
                             else:
                                 correction_map["btag"][tagger] = BTagScaleFactor(
                                     filename,
@@ -103,9 +102,9 @@ def load_SF(campaign, syst=False):
                                 )
                         else:
                             if filename.endswith(".json.gz"):
-                                correction_map[
-                                    "ctag"
-                                ] = correctionlib.CorrectionSet.from_file(filename)
+                                correction_map["ctag"] = (
+                                    correctionlib.CorrectionSet.from_file(filename)
+                                )
                             else:
                                 correction_map["ctag"][tagger] = BTagScaleFactor(
                                     filename,
@@ -501,7 +500,7 @@ def JME_shifts(
         ) and not exclude_jetveto:
             jets["pt"] = ak.where(jets.veto == 0, jets.pt, 0.0)
     shifts += [({"Jet": jets, "MET": met}, None)]
-    
+
     ## systematics
     if not isRealData:
         if systematic != False:
