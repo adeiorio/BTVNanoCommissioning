@@ -7,8 +7,8 @@ def histogrammer(events, workflow):
     ## Common variables
     flav_axis = Hist.axis.IntCategory([0, 1, 4, 5, 6], name="flav", label="Genflavour")
     syst_axis = Hist.axis.StrCategory([], name="syst", growth=True)
-    pt_axis = Hist.axis.Regular(50, 0, 200, name="pt", label=" $p_{T}$ [GeV]")
-    jpt_axis = Hist.axis.Regular(50, 0, 300, name="pt", label=" $p_{T}$ [GeV]")
+    pt_axis = Hist.axis.Regular(40, 0, 200, name="pt", label=" $p_{T}$ [GeV]")
+    jpt_axis = Hist.axis.Regular(60, 0, 300, name="pt", label=" $p_{T}$ [GeV]")
     softlpt_axis = Hist.axis.Regular(25, 0, 25, name="pt", label=" $p_{T}$ [GeV]")
     mass_axis = Hist.axis.Regular(50, 0, 300, name="mass", label=" $p_{T}$ [GeV]")
     eta_axis = Hist.axis.Regular(25, -2.5, 2.5, name="eta", label=" $\eta$")
@@ -294,6 +294,18 @@ def histogrammer(events, workflow):
             syst_axis, osss_axis, n_axis, Hist.storage.Weight()
         )
         for obj in obj_list:
+            if "mujet" in obj:
+                c_algos = ["DeepFlav", "RobustParTAK4", "PNet"]
+                c_WPs = ["L", "M", "T"]
+                for c_algo in c_algos:
+                    for c_WP in c_WPs:
+                        _hist_dict[f"{obj}_pt_{c_algo}{c_WP}"] = Hist.Hist(
+                            syst_axis,
+                            flav_axis,
+                            osss_axis,
+                            jpt_axis,
+                            Hist.storage.Weight(),
+                        )
             if "jet" in obj or "soft_l" in obj:
                 if obj == "soft_l":
                     _hist_dict["soft_l_pt"] = Hist.Hist(
@@ -357,6 +369,12 @@ def histogrammer(events, workflow):
             )
     ### discriminators
     disc_list = [
+        "btagDeepB",
+        "btagDeepC",
+        "btagDeepB_b",
+        "btagDeepB_bb",
+        "btagDeepCvL",
+        "btagDeepCvB",
         "btagDeepFlavB",
         "btagDeepFlavC",
         "btagTransDeepFlavB",
