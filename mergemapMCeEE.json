@@ -1,0 +1,7 @@
+{
+    "WJets": ["WtoLNu-4Jets_TuneCP5_13p6TeV_madgraphMLM-pythia8", "WtoLNu-4Jets_1J_TuneCP5_13p6TeV_madgraphMLM-pythia8", "WtoLNu-4Jets_2J_TuneCP5_13p6TeV_madgraphMLM-pythia8", "WtoLNu-4Jets_3J_TuneCP5_13p6TeV_madgraphMLM-pythia8"],
+    "ZJets": ["DYto2L-2Jets_MLL-10to50_TuneCP5_13p6TeV_amcatnloFXFX-pythia8", "DYto2L-2Jets_MLL-50_TuneCP5_13p6TeV_amcatnloFXFX-pythia8"],
+    "VV": ["WWto4Q_TuneCP5_13p6TeV_powheg-pythia8", "WWtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8", "WWto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8", "WZtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8"],
+    "TT": ["TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8", "TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8", "TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8", "TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8", "TTto4Q_TuneCP5_13p6TeV_powheg-pythia8", "TTto4Q_TuneCP5_13p6TeV_powheg-pythia8"],
+    "ST":[ "TbarBQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8", "TBbarQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8", "TBbartoLplusNuBbar-s-channel-4FS_TuneCP5_13p6TeV_amcatnlo-pythia8", "TbarWplus_DR_AtLeastOneLepton_TuneCP5_13p6TeV_powheg-pythia8", "TWminus_DR_AtLeastOneLepton_TuneCP5_13p6TeV_powheg-pythia8"]
+}

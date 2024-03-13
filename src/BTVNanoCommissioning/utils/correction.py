@@ -54,6 +54,7 @@ def load_SF(campaign, syst=False):
                         ext.add_weight_sets([f"* * {filename}"])
                         ext.finalize()
                         correction_map["PU"] = ext.make_evaluator()
+
         ## btag weight
         elif SF == "BTV":
             if "btag" in config[campaign]["BTV"].keys() and config[campaign]["BTV"][

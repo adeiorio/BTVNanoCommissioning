@@ -8,7 +8,7 @@ import hist
 
 plt.style.use(hep.style.ROOT)
 from BTVNanoCommissioning.workflows import workflows
-from BTVNanoCommissioning.helpers.xs_scaler import collate, scaleSumW
+from BTVNanoCommissioning.helpers.xs_scaler import collate, scaleSumW, additional_scale
 from BTVNanoCommissioning.helpers.definitions import definitions, axes_name
 from BTVNanoCommissioning.utils.plot_utils import (
     plotratio,
@@ -104,7 +104,9 @@ elif "*" in args.input:
     output = {i: load(i) for i in files}
 else:
     output = {args.input: load(args.input)}
-output = scaleSumW(output, args.lumi)
+#print(output)
+output = scaleSumW(output, 7*args.lumi)
+#output = additional_scale(output, , list(output.keys()))
 mergemap = {}
 ## create merge map from sample set/data MC
 if not any(".coffea" in o for o in output.keys()):
@@ -123,6 +125,17 @@ else:
     mergemap["mc"] = mclist
     mergemap["data"] = datalist
 
+
+#mergemap["mc"].remove("WtoLNu-2Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8")
+#mergemap["mc"].remove("WtoLNu-4Jets_1J_TuneCP5_13p6TeV_madgraphMLM-pythia8")
+#mergemap["mc"].remove("WtoLNu-4Jets_2J_TuneCP5_13p6TeV_madgraphMLM-pythia8")
+#mergemap["mc"].remove("WtoLNu-4Jets_3J_TuneCP5_13p6TeV_madgraphMLM-pythia8")
+#if "W+jets" in mergemap.keys():
+    #mergemap["W+jets"].remove("WtoLNu-4Jets_1J_TuneCP5_13p6TeV_madgraphMLM-pythia8")
+    #mergemap["W+jets"].remove("WtoLNu-4Jets_2J_TuneCP5_13p6TeV_madgraphMLM-pythia8")
+    #mergemap["W+jets"].remove("WtoLNu-4Jets_3J_TuneCP5_13p6TeV_madgraphMLM-pythia8")
+    #mergemap["W+jets"].remove("WtoLNu-2Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8")
+    
 collated = collate(output, mergemap)
 
 for sample in mergemap.keys():
@@ -588,26 +601,26 @@ for index, discr in enumerate(var_set):
     if args.log:
         print(
             "creating:",
-            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}.png",
+            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}_{args.split}.png",
         )
         ax.set_yscale("log")
         name = "log"
         ax.set_ylim(bottom=0.1)
         hep.mpl_magic(ax=ax)
         fig.savefig(
-            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}.pdf"
+            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}_{args.split}.pdf"
         )
         fig.savefig(
-            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}.png"
+            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}_{args.split}.png"
         )
     else:
         print(
             "creating:",
-            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}.png",
+            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}_{args.split}.png",
         )
         fig.savefig(
-            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}.pdf"
+            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}_{args.split}.pdf"
         )
         fig.savefig(
-            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}.png"
+            f"plot/BTV/{args.phase}_{args.ext}_{time}/unc_{discr}_inclusive{scale}_{name}_{args.split}.png"
         )

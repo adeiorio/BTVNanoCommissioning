@@ -114,6 +114,13 @@ xsection = [
         "comment": "from TOP-22-012",
     },
     {
+        "process_name": "TBbartoLplusNuBbar-s-channel-4FS_TuneCP5_13p6TeV_amcatnlo-pythia8",
+        "cross_section": "10.12",
+        "DAS": "/TWminus_DR_AtLeastOneLepton_CP5_13p6TeV_powheg-pythia8/Run3Winter22NanoAOD-122X_mcRun3_2021_realistic_v9-v1/NANOAODSIM",
+        "energy": "13.6",
+        "comment": "from TOP-22-012",
+    },
+    {
         "process_name": "TWminusto4Q_TuneCP5_13p6TeV_powheg-pythia8",
         "cross_section": "10.8",
         "energy": "13.6",
@@ -184,6 +191,13 @@ xsection = [
         "comment": "from TOP-22-012",
     },
     {
+        "process_name": "WtoLNu-2Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8",
+        "cross_section": "67710.0",
+        "DAS": "/WtoLNu-2Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/NANOAODSIM",
+        "energy": "13.6",
+        "comment": "from genxsanalyzer",
+    },
+    {
         "process_name": "WtoLNu-4Jets_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "cross_section": "63199.9",
         "DAS": "/WtoLNu-4Jets_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer22NanoAODv11-126X_mcRun3_2022_realistic_v2-v2/NANOAODSIM",
@@ -208,6 +222,13 @@ xsection = [
         "process_name": "WtoLNu-4Jets_3J_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "cross_section": "868.2",
         "DAS": "/WtoLNu-4Jets_3J_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer22NanoAODv11-126X_mcRun3_2022_realistic_v2-v2/NANOAODSIM",
+        "energy": "13.6",
+        "comment": "running genxsanalyzer",
+    },
+    {
+        "process_name": "WtoLNu-4Jets_4J_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "cross_section": "1",
+        "DAS": "/WtoLNu-4Jets_4J_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer22NanoAODv11-126X_mcRun3_2022_realistic_v2-v2/NANOAODSIM",
         "energy": "13.6",
         "comment": "running genxsanalyzer",
     },
