@@ -74,6 +74,7 @@ sample_mergemap = {
         "DYJetsToLL_M-50_TuneCP5_13p6TeV-madgraphMLM-pythia8",
     ],
     "W+jets": [
+        "WtoLNu-2Jets_TuneCP5_13p6TeV_amcatnloFXFX-pythia8",
         "WJetsToLNu_TuneCP5_13p6TeV-madgraphMLM-pythia8",
         "WtoLNu-4Jets_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         # jet binned sample
@@ -731,7 +732,7 @@ def rebin_hist(h, axis_name, edges):
     offset = 0.5 * np.min(ax.edges[1:] - ax.edges[:-1])
     edges_eval = edges + offset
     edge_idx = ax.index(edges_eval)
-    # Avoid going outside the range, reduceat will add the last index anyway
+    # Avoid going outside the range, reduce at will add the last index anyway
     if edge_idx[-1] == ax.size + ax.traits.overflow:
         edge_idx = edge_idx[:-1]
 
