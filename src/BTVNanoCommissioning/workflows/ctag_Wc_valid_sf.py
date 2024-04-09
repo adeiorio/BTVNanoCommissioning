@@ -27,6 +27,7 @@ from BTVNanoCommissioning.utils.selection import (
     mu_idiso,
     ele_mvatightid,
     softmu_mask,
+    btag_wp,
 )
 
 
@@ -293,6 +294,15 @@ class NanoProcessor(processor.ProcessorABC):
         nsoftmu = ak.count(ssmu.pt, axis=1)
         nmujet = ak.count(smuon_jet.pt, axis=1)
         smuon_jet = smuon_jet[:, 0]
+        c_algos = ["DeepFlav", "RobustParTAK4", "PNet"]
+        c_WPs = ["L", "M", "T"]
+        smuon_jet_passc = {}
+        for c_algo in c_algos:
+            smuon_jet_passc[c_algo] = {}
+            for c_WP in c_WPs:
+                smuon_jet_passc[c_algo][c_WP] = btag_wp(
+                    smuon_jet, self._campaign, c_algo, "c", c_WP
+                )
         ssmu = ssmu[:, 0]
         sz = shmu + ssmu
         sw = shmu + smet
@@ -519,6 +529,16 @@ class NanoProcessor(processor.ProcessorABC):
             output["w_mass"].fill(syst, osss, flatten(sw.mass), weight=weight)
             output["MET_pt"].fill(syst, osss, flatten(smet.pt), weight=weight)
             output["MET_phi"].fill(syst, osss, flatten(smet.phi), weight=weight)
+
+            for c_algo in c_algos:
+                for c_WP in c_WPs:
+                    output[f"mujet_pt_{c_algo}{c_WP}"].fill(
+                        syst,
+                        smflav[smuon_jet_passc[c_algo][c_WP]],
+                        osss[smuon_jet_passc[c_algo][c_WP]],
+                        flatten(smuon_jet[smuon_jet_passc[c_algo][c_WP]].pt),
+                        weight=weight[smuon_jet_passc[c_algo][c_WP]],
+                    )
         #######################
         #  Create root files  #
         #######################
@@ -569,9 +589,9 @@ class NanoProcessor(processor.ProcessorABC):
                     "MuonJet",
                     "dilep",
                     "charge",
-                    "MET",
+                    "PuppiMET",
                 ]:
-                    if "MET" in obj and ("pt" != kin or "phi" != kin):
+                    if "PuppiMET" in obj and ("pt" != kin or "phi" != kin):
                         continue
                     if (obj != "Muon" and obj != "SoftMuon") and (
                         "pfRelIso04_all" == kin or "d" in kin
