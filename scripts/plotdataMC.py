@@ -139,6 +139,9 @@ else:
 collated = collate(output, mergemap)
 
 for sample in mergemap.keys():
+    print(sample)
+    print(collated[sample])
+    print("**************************************************************")
     if type(collated[sample]) is not dict:
         del collated[sample]
 ### input text settings
@@ -505,6 +508,7 @@ for index, discr in enumerate(var_set):
             collated["data"][discr][allaxis], hmc, ax=rax, flow=args.flow, xerr=do_xerr
         )
     else:
+        print(allaxis)
         hmc = collated["mc"][discr][allaxis]
         if "sample" in args.split:
             hep.histplot(

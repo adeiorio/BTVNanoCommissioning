@@ -302,8 +302,6 @@ class NanoProcessor(processor.ProcessorABC):
             & req_pTratio
         )
         event_level = ak.fill_none(event_level, False)
-        if len(events[event_level]) == 0:
-            return {dataset: output}
 
         ####################
         # Selected objects #

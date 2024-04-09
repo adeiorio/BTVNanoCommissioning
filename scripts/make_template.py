@@ -104,6 +104,7 @@ if __name__ == "__main__":
             for d in inputs[f].keys():
                 flists.append(d)
         mergemap = {d: d for d in flists}
+
     axis = json.loads(arg.axis)
     # modify axis to hist methods
     for a in axis:
