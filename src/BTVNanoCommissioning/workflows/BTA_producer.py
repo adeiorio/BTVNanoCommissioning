@@ -14,7 +14,11 @@ from BTVNanoCommissioning.helpers.BTA_helper import (
     calc_ip_vector,
 )
 from BTVNanoCommissioning.helpers.func import update
-from BTVNanoCommissioning.utils.correction import load_SF, JME_shifts, JPCalibHandler
+from BTVNanoCommissioning.utils.correction import (
+    load_SF,
+    JME_shifts,
+    JPCalibHandler,
+)
 
 
 ## Based on coffea_array_producer.ipynb from Congqiao
@@ -41,6 +45,7 @@ class NanoProcessor(processor.ProcessorABC):
         #               when running on data, requires events passing HLT_PFJet80
         self.addPFMuons = addPFMuons
         self.addAllTracks = addAllTracks
+        self.isSyst = isSyst
 
     @property
     def accumulator(self):
@@ -51,13 +56,27 @@ class NanoProcessor(processor.ProcessorABC):
         dataset = events.metadata["dataset"]
         events = missing_branch(events)
         shifts = []
+        fname = f"{dataset}/{events.metadata['filename'].split('/')[-1].replace('.root','')}_{int(events.metadata['entrystop']/self.chunksize)}.root"
+        dirname = "BTA"
+        if self.addAllTracks:
+            dirname += "_addAllTracks"
+        if self.addPFMuons:
+            dirname += "_addPFMuons"
+        if self.isSyst:
+            fname = "systematic/" + fname
+        checkf = os.popen(
+            f"gfal-ls root://eoscms.cern.ch//eos/cms/store/group/phys_btag/milee/{dirname}/{self._campaign.replace('Run3','')}/{fname}"
+        ).read()
+        if len(checkf) > 0:
+            print("skip ", checkf)
+            return {dataset: len(events)}
 
-        if "JME" in self.SF_map.keys():
+        if "JME" in self.SF_map.keys() or "jetveto" in self.SF_map.keys():
             shifts = JME_shifts(
                 shifts, self.SF_map, events, self._campaign, isRealData, False, True
             )
         else:
-            if "Run3" not in self._campaign:
+            if int(self._year) < 2020:
                 shifts = [
                     ({"Jet": events.Jet, "MET": events.MET, "Muon": events.Muon}, None)
                 ]
@@ -81,19 +100,21 @@ class NanoProcessor(processor.ProcessorABC):
     def process_shift(self, events, shift_name):
         dataset = events.metadata["dataset"]
         isRealData = not hasattr(events, "genWeight")
-        events = missing_branch(events)
 
         if isRealData and self.addAllTracks:
             events = events[events.HLT.PFJet80]
             if len(events) == 0:
                 return {dataset: len(events)}
-
         # basic variables
         basic_vars = {
             "Run": events.run,
             "Evt": events.event,
             "LumiBlock": events.luminosityBlock,
             "rho": events.fixedGridRhoFastjetAll,
+            "fixedGridRhoFastjetCentralCalo": events.Rho.fixedGridRhoFastjetCentralCalo,
+            "fixedGridRhoFastjetCentralChargedPileUp": events.Rho.fixedGridRhoFastjetCentralChargedPileUp,
+            "npvs": ak.values_astype(events.PV.npvs, np.int32),
+            "npvsGood": ak.values_astype(events.PV.npvsGood, np.int32),
         }
         if not isRealData:
             basic_vars["nPU"] = events.Pileup.nPU
@@ -125,7 +146,6 @@ class NanoProcessor(processor.ProcessorABC):
         basic_vars["BitTrigger"] = to_bitwise_trigger(
             pass_trig, ak.ArrayBuilder()
         ).snapshot()
-
         # PV
         PV = ak.zip(
             {
@@ -385,8 +405,12 @@ class NanoProcessor(processor.ProcessorABC):
         ###############
         jet = events.Jet[
             (events.Jet.pt > 20.0) & (abs(events.Jet.eta) < 2.5)
-        ]  # basic selection
+        ]  # basic selection & remove jets inside veto map
+
         zeros = ak.zeros_like(jet.pt, dtype=int)
+        if "pt_raw" not in jet.fields:
+            jet["pt_raw"] = jet.pt * (1.0 - jet.rawFactor)
+            jet["pt_orig"] = jet.pt
         Jet = ak.zip(
             {
                 # basic kinematics
@@ -446,32 +470,54 @@ class NanoProcessor(processor.ProcessorABC):
                 "PNetCDiscN": jet.btagNegPNetProbC,
                 "PNetUDSDiscN": jet.btagNegPNetProbUDS,
                 "PNetGDiscN": jet.btagNegPNetProbG,
-                # ParticleTransformer
-                "ParTBDisc": jet.btagRobustParTAK4B,
-                "ParTCvsLDisc": jet.btagRobustParTAK4CvL,
-                "ParTCvsBDisc": jet.btagRobustParTAK4CvB,
-                "ParTQvsGDisc": jet.btagRobustParTAK4QG,
-                "ParTBDisc_b": jet.btagRobustParTAK4B_b,
-                "ParTBDisc_bb": jet.btagRobustParTAK4B_bb,
-                "ParTBDisc_lepb": jet.btagRobustParTAK4B_lepb,
-                "ParTCDisc": jet.btagRobustParTAK4C,
-                "ParTUDSDisc": jet.btagRobustParTAK4UDS,
-                "ParTGDisc": jet.btagRobustParTAK4G,
-                "ParTBDiscN": jet.btagNegRobustParTAK4B,
-                "ParTCvsLDiscN": jet.btagNegRobustParTAK4CvL,
-                "ParTCvsBDiscN": jet.btagNegRobustParTAK4CvB,
-                "ParTQvsGDiscN": jet.btagNegRobustParTAK4QG,
-                "ParTBDisc_bN": jet.btagNegRobustParTAK4B_b,
-                "ParTBDisc_bbN": jet.btagNegRobustParTAK4B_bb,
-                "ParTBDisc_lepbN": jet.btagNegRobustParTAK4B_lepb,
-                "ParTCDiscN": jet.btagNegRobustParTAK4C,
-                "ParTUDSDiscN": jet.btagNegRobustParTAK4UDS,
-                "ParTGDiscN": jet.btagNegRobustParTAK4G,
             }
         )
-        if isRealData:
-            Jet["vetomap"] = jet.veto
-
+        if "btagRobustParTAK4B" in jet.fields:
+            # ParticleTransformer
+            Jet["ParTBDisc"] = jet.btagRobustParTAK4B
+            Jet["ParTCvsLDisc"] = jet.btagRobustParTAK4CvL
+            Jet["ParTCvsBDisc"] = jet.btagRobustParTAK4CvB
+            Jet["ParTQvsGDisc"] = jet.btagRobustParTAK4QG
+            Jet["ParTBDisc_b"] = jet.btagRobustParTAK4B_b
+            Jet["ParTBDisc_bb"] = jet.btagRobustParTAK4B_bb
+            Jet["ParTBDisc_lepb"] = jet.btagRobustParTAK4B_lepb
+            Jet["ParTCDisc"] = jet.btagRobustParTAK4C
+            Jet["ParTUDSDisc"] = jet.btagRobustParTAK4UDS
+            Jet["ParTGDisc"] = jet.btagRobustParTAK4G
+            Jet["ParTBDiscN"] = jet.btagNegRobustParTAK4B
+            Jet["ParTCvsLDiscN"] = jet.btagNegRobustParTAK4CvL
+            Jet["ParTCvsBDiscN"] = jet.btagNegRobustParTAK4CvB
+            Jet["ParTQvsGDiscN"] = jet.btagNegRobustParTAK4QG
+            Jet["ParTBDisc_bN"] = jet.btagNegRobustParTAK4B_b
+            Jet["ParTBDisc_bbN"] = jet.btagNegRobustParTAK4B_bb
+            Jet["ParTBDisc_lepbN"] = jet.btagNegRobustParTAK4B_lepb
+            Jet["ParTCDiscN"] = jet.btagNegRobustParTAK4C
+            Jet["ParTUDSDiscN"] = jet.btagNegRobustParTAK4UDS
+            Jet["ParTGDiscN"] = jet.btagNegRobustParTAK4G
+        if "btagUParTAK4B" in jet.fields:
+            # UParT
+            Jet["UParTBDisc"] = jet.btagUParTAK4B
+            Jet["UParTCvsLDisc"] = jet.btagUParTAK4CvL
+            Jet["UParTCvsBDisc"] = jet.btagUParTAK4CvB
+            Jet["UParTQvsGDisc"] = jet.btagUParTAK4QG
+            Jet["UParTBDisc_b"] = jet.btagUParTAK4B_b
+            Jet["UParTBDisc_bb"] = jet.btagUParTAK4B_bb
+            Jet["UParTBDisc_lepb"] = jet.btagUParTAK4B_lepb
+            Jet["UParTCDisc"] = jet.btagUParTAK4C
+            Jet["UParTUDSDisc"] = jet.btagUParTAK4UDS
+            Jet["UParTGDisc"] = jet.btagUParTAK4G
+            Jet["UParTBDiscN"] = jet.btagNegUParTAK4B
+            Jet["UParTCvsLDiscN"] = jet.btagNegUParTAK4CvL
+            Jet["UParTCvsBDiscN"] = jet.btagNegUParTAK4CvB
+            Jet["UParTQvsGDiscN"] = jet.btagNegUParTAK4QG
+            Jet["UParTBDisc_bN"] = jet.btagNegUParTAK4B_b
+            Jet["UParTBDisc_bbN"] = jet.btagNegUParTAK4B_bb
+            Jet["UParTBDisc_lepbN"] = jet.btagNegUParTAK4B_lepb
+            Jet["UParTCDiscN"] = jet.btagNegUParTAK4C
+            Jet["UParTUDSDiscN"] = jet.btagNegUParTAK4UDS
+            Jet["UParTGDiscN"] = jet.btagNegUParTAK4G
+        if "veto" in jet.fields:
+            Jet["veto"] = jet.veto
         if not isRealData:
             Jet["nbHadrons"] = jet.nBHadrons
             Jet["ncHadrons"] = jet.nCHadrons
@@ -709,7 +755,8 @@ class NanoProcessor(processor.ProcessorABC):
             )
 
         # calculate track probability, based on IPsig and category
-        jpc = JPCalibHandler(self._campaign, isRealData, dataset)
+        JPMC_syst = True if self.isSyst == "JP_MC" else False
+        jpc = JPCalibHandler(self._campaign, isRealData, dataset, JPMC_syst)
         trkj_jetbased["proba"] = jpc.calc_track_proba(
             trkj_jetbased.btagSip3dSig,
             ak.where(trkj_jetbased.category >= 0, trkj_jetbased.category, 0),
@@ -1089,7 +1136,14 @@ class NanoProcessor(processor.ProcessorABC):
             output["Genlep"] = Genlep
             output["GenV0"] = GenV0
         os.system(f"mkdir -p {dataset}")
-        fname = f"{dataset}/f{events.metadata['filename'].split('_')[-1].replace('.root','')}_{int(events.metadata['entrystop']/self.chunksize)}.root"
+        fname = f"{dataset}/{events.metadata['filename'].split('/')[-1].replace('.root','')}_{int(events.metadata['entrystop']/self.chunksize)}.root"
+        if self.isSyst:
+            fname = "systematic/" + fname
+        dirname = "BTA"
+        if self.addAllTracks:
+            dirname += "_addAllTracks"
+        if self.addPFMuons:
+            dirname += "_addPFMuons"
         with uproot.recreate(fname) as fout:
             output_root = {}
             for bname in output.keys():
@@ -1101,6 +1155,11 @@ class NanoProcessor(processor.ProcessorABC):
                         b_nest[n] = ak.packed(ak.without_parameters(output[bname][n]))
                     output_root[bname] = ak.zip(b_nest)
             fout["btagana/ttree"] = output_root
+        os.system(
+            f"xrdcp -p --silent {fname} root://eoscms.cern.ch//eos/cms/store/group/phys_btag/milee/{dirname}/{self._campaign.replace('Run3','')}/{fname}"
+        )
+        os.system(f"rm {fname}")
+
         return {dataset: len(events)}
 
     def postprocess(self, accumulator):

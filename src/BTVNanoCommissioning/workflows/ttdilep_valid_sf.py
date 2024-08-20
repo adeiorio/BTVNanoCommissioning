@@ -20,14 +20,19 @@ from BTVNanoCommissioning.utils.correction import (
 from BTVNanoCommissioning.helpers.func import (
     flatten,
     update,
-    uproot_writeable,
     dump_lumi,
 )
 from BTVNanoCommissioning.helpers.update_branch import missing_branch
 
 ## load histograms & selctions for this workflow
 from BTVNanoCommissioning.utils.histogrammer import histogrammer
-from BTVNanoCommissioning.utils.selection import jet_id, mu_idiso, ele_cuttightid
+from BTVNanoCommissioning.utils.array_writer import array_writer
+from BTVNanoCommissioning.utils.selection import (
+    jet_id,
+    mu_idiso,
+    ele_cuttightid,
+    btag_wp,
+)
 
 
 class NanoProcessor(processor.ProcessorABC):
@@ -63,14 +68,14 @@ class NanoProcessor(processor.ProcessorABC):
         events = missing_branch(events)
         shifts = []
         if "JME" in self.SF_map.keys():
-            syst_JERC = True if self.isSyst != None else False
+            syst_JERC = self.isSyst
             if self.isSyst == "JERC_split":
                 syst_JERC = "split"
             shifts = JME_shifts(
                 shifts, self.SF_map, events, self._campaign, isRealData, syst_JERC
             )
         else:
-            if "Run3" not in self._campaign:
+            if int(self._year) < 2020:
                 shifts = [
                     ({"Jet": events.Jet, "MET": events.MET, "Muon": events.Muon}, None)
                 ]
@@ -108,10 +113,11 @@ class NanoProcessor(processor.ProcessorABC):
             "sumw": processor.defaultdict_accumulator(float),
             **_hist_event_dict,
         }
-        if isRealData:
-            output["sumw"] = len(events)
-        else:
-            output["sumw"] = ak.sum(events.genWeight)
+        if shift_name is None:
+            if isRealData:
+                output["sumw"] = len(events)
+            else:
+                output["sumw"] = ak.sum(events.genWeight)
         ####################
         #    Selections    #
         ####################
@@ -217,6 +223,16 @@ class NanoProcessor(processor.ProcessorABC):
         )
         event_level = ak.fill_none(event_level, False)
         if len(events[event_level]) == 0:
+            if self.isArray:
+                array_writer(
+                    self,
+                    events[event_level],
+                    events,
+                    "nominal",
+                    dataset,
+                    isRealData,
+                    empty=True,
+                )
             return {dataset: output}
 
         ####################
@@ -255,9 +271,9 @@ class NanoProcessor(processor.ProcessorABC):
         if not isRealData:
             weights.add("genweight", events[event_level].genWeight)
             par_flav = (sjets.partonFlavour == 0) & (sjets.hadronFlavour == 0)
-            genflavor = sjets.hadronFlavour + 1 * par_flav
+            genflavor = ak.values_astype(sjets.hadronFlavour + 1 * par_flav, int)
             if len(self.SF_map.keys()) > 0:
-                syst_wei = True if self.isSyst != None else False
+                syst_wei = True if self.isSyst != False else False
                 if "PU" in self.SF_map.keys():
                     puwei(
                         events[event_level].Pileup.nTrueInt,
@@ -286,14 +302,14 @@ class NanoProcessor(processor.ProcessorABC):
             "DeepCSVC",
             "DeepCSVB",
             "DeepJetB",
-            "DeepJetB",
+            "DeepJetC",
         ]  # exclude b-tag SFs for btag inputs
 
         ####################
         #  Fill histogram  #
         ####################
         for syst in systematics:
-            if self.isSyst == None and syst != "nominal":
+            if self.isSyst == False and syst != "nominal":
                 break
             if self.noHist:
                 break
@@ -331,9 +347,10 @@ class NanoProcessor(processor.ProcessorABC):
                         h.fill(
                             syst,
                             flatten(
-                                ak.broadcast_arrays(genflavor[:, i], spfcands[i]["pt"])[
-                                    0
-                                ]
+                                ak.broadcast_arrays(
+                                    genflavor[:, i],
+                                    spfcands[i]["pt"],
+                                )[0]
                             ),
                             flatten(spfcands[i][histname.replace("PFCands_", "")]),
                             weight=flatten(
@@ -354,25 +371,20 @@ class NanoProcessor(processor.ProcessorABC):
                             h.fill(
                                 "noSF",
                                 flav=flatten(genflavor[:, i]),
-                                discr=flatten(
-                                    np.where(
-                                        sel_jet[histname.replace(f"_{i}", "")] < 0,
-                                        -0.2,
-                                        sel_jet[histname.replace(f"_{i}", "")],
-                                    )
-                                ),
+                                discr=flatten(sel_jet[histname.replace(f"_{i}", "")]),
                                 weight=weights.partial_weight(exclude=exclude_btv),
                             )
                             if not isRealData and "btag" in self.SF_map.keys():
                                 h.fill(
                                     syst=syst,
-                                    flav=flatten(genflavor[:, i]),
-                                    discr=flatten(
-                                        np.where(
-                                            sel_jet[histname.replace(f"_{i}", "")] < 0,
-                                            -0.2,
-                                            sel_jet[histname.replace(f"_{i}", "")],
+                                    flav=flatten(
+                                        ak.values_astype(
+                                            genflavor[:, i],
+                                            np.uint8,
                                         )
+                                    ),
+                                    discr=flatten(
+                                        sel_jet[histname.replace(f"_{i}", "")]
                                     ),
                                     weight=weight,
                                 )
@@ -407,16 +419,26 @@ class NanoProcessor(processor.ProcessorABC):
                     weight=weight,
                 )
             output["njet"].fill(syst, nseljet, weight=weight)
-
+            output["npvs"].fill(
+                syst,
+                events[event_level].PV.npvs,
+                weight=weight,
+            )
+            if not isRealData:
+                output["pu"].fill(
+                    syst,
+                    events[event_level].Pileup.nTrueInt,
+                    weight=weight,
+                )
         #######################
         #  Create root files  #
         #######################
         if self.isArray:
             # Keep the structure of events and pruned the object size
             pruned_ev = events[event_level]
-            pruned_ev.Jet = sjets
-            pruned_ev.Electron = sel
-            pruned_ev.Muon = smu
+            pruned_ev["SelJet"] = sjets
+            pruned_ev["Muon"] = smu
+            pruned_ev["Electron"] = sel
             if "PFCands" in events.fields:
                 pruned_ev.PFCands = spfcands
             # Add custom variables
@@ -429,32 +451,8 @@ class NanoProcessor(processor.ProcessorABC):
 
             pruned_ev["dr_mujet0"] = smu.delta_r(sjets[:, 0])
             pruned_ev["dr_mujet1"] = smu.delta_r(sjets[:, 1])
+            array_writer(self, pruned_ev, events, systematics[0], dataset, isRealData)
 
-            # Create a list of variables want to store. For objects from the PFNano file, specify as {object}_{variable}, wildcard option only accepted at the end of the string
-            out_branch = np.setdiff1d(
-                np.array(pruned_ev.fields), np.array(events.fields)
-            )
-            for kin in ["pt", "eta", "phi", "mass", "dz", "dxy"]:
-                for obj in ["Jet", "Electron", "Muon"]:
-                    if obj == "Jet" and "d" in kin:
-                        continue
-                    out_branch = np.append(out_branch, [f"{obj}_{kin}"])
-            out_branch = np.append(
-                out_branch,
-                [
-                    "Jet_btagDeep*",
-                    "Jet_DeepJet*",
-                    "PFCands_*",
-                    "Electron_pfRelIso03_all",
-                    "Muon_pfRelIso03_all",
-                ],
-            )
-            # write to root files
-            os.system(f"mkdir -p {self.name}/{dataset}")
-            with uproot.recreate(
-                f"{self.name}/{dataset}/f{events.metadata['filename'].split('_')[-1].replace('.root','')}_{systematics[0]}_{int(events.metadata['entrystop']/self.chunksize)}.root"
-            ) as fout:
-                fout["Events"] = uproot_writeable(pruned_ev, include=out_branch)
         return {dataset: output}
 
     def postprocess(self, accumulator):

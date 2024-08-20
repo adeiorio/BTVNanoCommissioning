@@ -71,27 +71,30 @@ def get_main_parser():
         help="JSON file containing dataset and file locations (default: %(default)s)",
     )
     ## Configuations
-    parser.add_argument("--year", default="2022", help="Year")
+    parser.add_argument("--year", default="2023", help="Year")
     parser.add_argument(
         "--campaign",
-        default="Summer22Run3",
+        default="Summer23",
         choices=[
             "Rereco17_94X",
             "Winter22Run3",
-            "Summer22Run3",
-            "Summer22EERun3",
+            "Summer22",
+            "Summer22EE",
+            "Summer23",
+            "Summer23BPix",
             "2018_UL",
             "2017_UL",
             "2016preVFP_UL",
             "2016postVFP_UL",
+            "CAMPAIGN_prompt_dataMC",
         ],
         help="Dataset campaign, change the corresponding correction files",
     )
     parser.add_argument(
         "--isSyst",
-        default=None,
+        default=False,
         type=str,
-        choices=[None, "all", "weight_only", "JERC_split"],
+        choices=[False, "all", "weight_only", "JERC_split", "JP_MC"],
         help="Run with systematics, all, weights_only(no JERC uncertainties included),JERC_split, None",
     )
     parser.add_argument("--isArray", action="store_true", help="Output root files")
@@ -227,7 +230,7 @@ if __name__ == "__main__":
     ogoutput = args.output
     histoutdir = ogoutput.split(".")[0]
     coffeaoutput = f"{histoutdir}/{ogoutput}"
-    outdir = histoutdir
+    outdir = "arrays_" + histoutdir
     basename = ogoutput.replace(".coffea", "").replace("hists_", "")
     if args.output == parser.get_default("output"):
         index = args.samplejson.rfind("/") + 1
@@ -259,7 +262,7 @@ if __name__ == "__main__":
     if args.only is not None:
         if args.only in sample_dict.keys():  # is dataset
             sample_dict = dict([(args.only, sample_dict[args.only])])
-            coffeaoutput = coffeaoutput.replace(".coffea", f"_{key}.coffea")
+            coffeaoutput = coffeaoutput.replace(".coffea", f"_{args.only}.coffea")
         elif args.only.isdigit():
             isamp = int(args.only)
             nsamp = len(sample_dict.keys())
@@ -275,7 +278,7 @@ if __name__ == "__main__":
             _new_dict = {}
             print("Will only proces the following datasets:")
             for k, v in sample_dict.items():
-                if k.lstrip("/").startswith(args.only.rstrip("*")):
+                if args.only.replace("*", "") in k:
                     print("    ", k)
                     _new_dict[k] = v
             sample_dict = _new_dict

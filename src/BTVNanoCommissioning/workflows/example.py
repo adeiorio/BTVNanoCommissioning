@@ -27,6 +27,7 @@ from BTVNanoCommissioning.helpers.update_branch import missing_branch
 
 ## load histograms & selctions for this workflow
 from BTVNanoCommissioning.utils.histogrammer import histogrammer
+from BTVNanoCommissioning.utils.array_writer import array_writer
 from BTVNanoCommissioning.utils.selection import jet_id, mu_idiso, ele_cuttightid
 
 
@@ -63,14 +64,14 @@ class NanoProcessor(processor.ProcessorABC):
         events = missing_branch(events)
         shifts = []
         if "JME" in self.SF_map.keys():
-            syst_JERC = True if self.isSyst != None else False
+            syst_JERC = self.isSyst
             if self.isSyst == "JERC_split":
                 syst_JERC = "split"  # JEC splitted into 11 sources instead of JES_total
             shifts = JME_shifts(
                 shifts, self.SF_map, events, self._campaign, isRealData, syst_JERC
             )
         else:
-            if "Run3" not in self._campaign:
+            if int(self._year) < 2020:
                 shifts = [
                     ({"Jet": events.Jet, "MET": events.MET, "Muon": events.Muon}, None)
                 ]
@@ -110,10 +111,11 @@ class NanoProcessor(processor.ProcessorABC):
             "sumw": processor.defaultdict_accumulator(float),
             **_hist_event_dict,
         }
-        if isRealData:
-            output["sumw"] = len(events)
-        else:
-            output["sumw"] = ak.sum(events.genWeight)
+        if shift_name is None:
+            if isRealData:
+                output["sumw"] = len(events)
+            else:
+                output["sumw"] = ak.sum(events.genWeight)
         ####################
         #    Selections    #
         ####################
@@ -189,7 +191,7 @@ class NanoProcessor(processor.ProcessorABC):
         if not isRealData:
             weights.add("genweight", events[event_level].genWeight)
             par_flav = (sjets.partonFlavour == 0) & (sjets.hadronFlavour == 0)
-            genflavor = sjets.hadronFlavour + 1 * par_flav
+            genflavor = ak.values_astype(sjets.hadronFlavour + 1 * par_flav, int)
             # Load SFs
             if len(self.SF_map.keys()) > 0:
                 syst_wei = (
@@ -226,14 +228,14 @@ class NanoProcessor(processor.ProcessorABC):
             "DeepCSVC",
             "DeepCSVB",
             "DeepJetB",
-            "DeepJetB",
+            "DeepJetC",
         ]  # exclude b-tag SFs for btag inputs
 
         ####################
         #  Fill histogram  #
         ####################
         for syst in systematics:
-            if self.isSyst == None and syst != "nominal":
+            if self.isSyst == False and syst != "nominal":
                 break
             if self.noHist:
                 break
@@ -245,7 +247,10 @@ class NanoProcessor(processor.ProcessorABC):
 
             # fill the histogram (check axis defintion in histogrammer and following the order)
             output["jet_pt"].fill(
-                syst, flatten(genflavor[:, 0]), flatten(sjets[:, 0].pt), weight=weight
+                syst,
+                flatten(genflavor[:, 0]),
+                flatten(sjets[:, 0].pt),
+                weight=weight,
             )
             output["mu_pt"].fill(syst, flatten(smu[:, 0].pt), weight=weight)
             output["dr_mujet"].fill(
@@ -260,7 +265,14 @@ class NanoProcessor(processor.ProcessorABC):
         if self.isArray:
             # Keep the structure of events and pruned the object size
             pruned_ev = events[event_level]  # pruned events
+
             pruned_ev.Muon = smu  # replace muon collections with selected muon
+        if self.isArray:
+            # Keep the structure of events and pruned the object size
+            pruned_ev = events[event_level]
+            pruned_ev["SelJet"] = sjets
+            pruned_ev["Muon"] = smu
+
             # Add custom variables
             if not isRealData:
                 pruned_ev["weight"] = weights.weight()
@@ -268,17 +280,8 @@ class NanoProcessor(processor.ProcessorABC):
                     pruned_ev[f"{ind_wei}_weight"] = weights.partial_weight(
                         include=[ind_wei]
                     )
-            # Create a list of variables want to store. For objects from the PFNano file, specify as {object}_{variable}, wildcard option only accepted at the end of the string
-            out_branch = np.setdiff1d(
-                np.array(pruned_ev.fields), np.array(events.fields)
-            )  # stored customed variables
-            out_branch = np.append(out_branch, ["Jet_btagDeep*", "Muon_pt"])
-            # write to root files
-            os.system(f"mkdir -p {self.name}/{dataset}")
-            with uproot.recreate(
-                f"{self.name}/{dataset}/f{events.metadata['filename'].split('_')[-1].replace('.root','')}_{systematics[0]}_{int(events.metadata['entrystop']/self.chunksize)}.root"
-            ) as fout:
-                fout["Events"] = uproot_writeable(pruned_ev, include=out_branch)
+            array_writer(self, pruned_ev, events, systematics[0], dataset, isRealData)
+
         return {dataset: output}
 
     ## post process, return the accumulator, compressed
