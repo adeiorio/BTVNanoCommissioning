@@ -113,7 +113,7 @@ elif "*" in args.input:
     output = {i: load(i) for i in files}
 else:
     output = {args.input: load(args.input)}
-output = scaleSumW(output, args.lumi)
+output = scaleSumW(output, 7*args.lumi)
 mergemap = {}
 ## create merge map from sample set/data MC
 if not os.path.isdir(f"plot/{args.phase}_{args.ext}/"):
@@ -250,7 +250,7 @@ for index, discr in enumerate(var_set):
         ]
         if "noSF" in systlist:
             noSF_axis["syst"] = "nominal"
-
+    print(systlist)
     ## rebin config, add xerr
     do_xerr = False
     if args.autorebin is not None:

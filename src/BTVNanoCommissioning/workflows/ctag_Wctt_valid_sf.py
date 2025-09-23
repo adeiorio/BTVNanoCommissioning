@@ -66,6 +66,12 @@ class NanoProcessor(processor.ProcessorABC):
         dataset = events.metadata["dataset"]
         isRealData = not hasattr(events, "genWeight")
 
+
+        if "WtoENu-4Jets_TuneCP5_13p6TeV_madgraphMLM-pythia8" in dataset or "WtoMuNu-4Jets_TuneCP5_13p6TeV_madgraphMLM-pythia8" in dataset or "WtoTauNu-4Jets_TuneCP5_13p6TeV_madgraphMLM-pythia8" in dataset :
+            no2count_mask = (events.LHE.Njets == 0)
+        else:
+            no2count_mask = np.ones(len(events), dtype="bool")
+
         isMu = False
         isEle = False
         ### selections from Spandan
@@ -314,6 +320,7 @@ class NanoProcessor(processor.ProcessorABC):
             & req_mtw
             & req_dilepveto
             & req_pTratio
+            & no2count_mask
         )
         event_level = ak.fill_none(event_level, False)
         if len(events[event_level]) == 0:

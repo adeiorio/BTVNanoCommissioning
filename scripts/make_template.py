@@ -56,7 +56,7 @@ parser.add_argument(
 
 
 def create_template(inputs, variable, mergemap, axis, lumi, output):
-    inputs = scaleSumW(inputs, lumi)
+    inputs = scaleSumW(inputs, 5*lumi)
     collated = collate(inputs, mergemap)
     mergemap_all = {"all": [s for s in inputs]}
     merge_all = collate(inputs, {"all": [s for s in inputs]})
