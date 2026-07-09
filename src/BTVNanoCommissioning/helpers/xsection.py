@@ -29,6 +29,19 @@ xsection = [
         "comment": "from TOP-22-012",
     },
     {                    
+        "process_name": "DYto2E-4Jets_Bin-MLL-10to50_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "cross_section": "6439.1667",
+        "energy": "13.6",
+    },
+    {
+        "process_name": "DYto2Mu-4Jets_Bin-MLL-10to50_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "cross_section": "6439.1667",
+        "energy": "13.6",
+    },    {
+        "process_name": "DYto2Tau-4Jets_Bin-MLL-10to50_TuneCP5_13p6TeV_madgraphMLM-pythia8",
+        "cross_section": "6439.1667",
+        "energy": "13.6",
+    },    {                    
         "process_name": "DYto2E-4Jets_Bin-MLL-50_TuneCP5_13p6TeV_madgraphMLM-pythia8",
         "cross_section": "2115.33",
         "energy": "13.6",

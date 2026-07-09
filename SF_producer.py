@@ -37,7 +37,7 @@ def getc_data(data, fullMC, cW):
     hdata.Add(cW, scale)
     return deepcopy(hdata)
 
-def drawandsave(h, var, lep, era):
+def drawandsave(h, var, lep, era, syst):
     c1 = rt.TCanvas('','', 0, 0, 700, 600)
     c1.Draw()
     h.Draw()
@@ -58,8 +58,10 @@ def drawandsave(h, var, lep, era):
     p.Modified()
     p.Update()    #c1.BuildLegend()
     c1.Update()
-    c1.Print(f"v1_fix_SF_{var}_{lep}_{era}.png")
-    c1.Print(f"v1_fix_SF_{var}_{lep}_{era}.pdf")
+    if not os.path.exists("SFplot"):
+        os.system(f"mkdir SFplot")
+    c1.Print(f"SFplot/v1_fix_SF_{var}_{lep}_{era}_{syst}.png")
+    c1.Print(f"SFplot/v1_fix_SF_{var}_{lep}_{era}_{syst}.pdf")
 
 def ratio(h1, h2, var, lep, era, syst):
     print(var)
@@ -75,7 +77,7 @@ def ratio(h1, h2, var, lep, era, syst):
     h2.SetName("MC")
     h_ratio = rt.TRatioPlot(h1, h2)
     out = deepcopy(h_ratio)
-    drawandsave(out, var, lep, era)
+    drawandsave(out, var, lep, era, syst)
     h_ratio.Draw()
     graph = h_ratio.GetLowerRefGraph()
     xaxis = h1.GetXaxis()
@@ -170,18 +172,20 @@ def get_final_dataframe(dict_dataframes, vars):
 # Main part of the code
 # Definition of the variables
 path = {}
-path["mu"] = "/eos/user/a/adeiorio/btv_ctag_SF/v1EE/histo/"
-path["e"] = "/eos/user/a/adeiorio/btv_ctag_SF/v1eEE/histo/"
-path["mue"] = "/eos/user/a/adeiorio/btv_ctag_SF/sum_v1/"
+path["mu"] = "/eos/user/a/adeiorio/btv_ctag_SF/Summer24/v2/histo/"
+path["e"] = "/eos/user/a/adeiorio/btv_ctag_SF/Summer24/v2e/histo/"
+path["mue"] = "/eos/user/a/adeiorio/btv_ctag_SF/24/sum_v1/"
 #path["mue"] = "/eos/user/a/adeiorio/btv_ctag_SF/23/sum_v1/"
-era = "22EE"  # Change this to the desired era, e.g., "22EE", "23", "23BP"
-scale = 7
+era = "24"  # Change this to the desired era, e.g., "22EE", "23", "23BP"
+scale = 1
 
 bvar = "mujet_pt"
 allvar = []
 c_algos = ["DeepFlav", "RobustParTAK4", "PNet"]
+c_algos = ["UParTAK4"]
 c_WPs = {'22':["L", "M", "T"],
-         '23':["L", "M", "T", "XT"]
+         '23':["L", "M", "T", "XT"],
+         '24':["L", "M", "T", "XT"],
         }
 for c_algo in c_algos:
     for c_WP in c_WPs[era[:2]]:
@@ -191,15 +195,17 @@ histn = ["WJets",
          "ZJets",
          "VV",
          "TT",
-         "ST"]
+         "ST",
+         ]
 #allvar.remove(bvar)
 
 systs = {
         '22': ['nominal', 'puweightUp', 'puweightDown', 'mu_IDUp', 'mu_IDDown', 'mu_IsoUp', 'mu_IsoDown', 'JESUp', 'JESDown', 'UESUp', 'UESDown', 'JERUp', 'JERDown'],
         '22EE': ['nominal', 'puweightUp', 'puweightDown', 'ele_IDUp', 'ele_IDDown', 'ele_Reco_medDown', 'ele_Reco_medUp', 'mu_IDUp', 'mu_IDDown', 'mu_IsoUp', 'mu_IsoDown', 'JESUp', 'JESDown', 'UESUp', 'UESDown', 'JERUp', 'JERDown'],
         '23': ['nominal', 'puweightUp', 'ele_RecoDown', 'scalevar_muFUp', 'scalevar_muRUp', 'UEPS_FSRUp', 'ele_IDUp', 'scalevar_muFDown', 'scalevar_muR_muFUp', 'UEPS_ISRDown', 'PDFaS_weightUp', 'ele_IDDown', 'PDF_weightUp', 'scalevar_muRDown', 'aS_weightUp', 'ele_RecoUp', 'puweightDown', 'PDF_weightDown', 'UEPS_FSRDown', 'PDFaS_weightDown', 'UEPS_ISRUp', 'scalevar_muR_muFDown', 'aS_weightDown', 'JESUp', 'JESDown', 'UESUp', 'UESDown', 'JERUp', 'JERDown'],
-        '23BP': ['nominal', 'UEPS_ISRDown', 'ele_RecoDown', 'scalevar_muRDown', 'aS_weightDown', 'PDF_weightUp', 'puweightDown', 'UEPS_FSRDown', 'PDFaS_weightUp', 'PDFaS_weightDown', 'scalevar_muFUp', 'ele_IDUp', 'scalevar_muR_muFUp', 'ele_IDDown', 'PDF_weightDown', 'ele_RecoUp', 'scalevar_muR_muFDown', 'scalevar_muFDown', 'aS_weightUp', 'puweightUp', 'scalevar_muRUp', 'UEPS_ISRUp', 'UEPS_FSRUp', 'JESUp', 'JESDown', 'JERUp', 'JERDown']
-    }
+        '23BP': ['nominal', 'UEPS_ISRDown', 'ele_RecoDown', 'scalevar_muRDown', 'aS_weightDown', 'PDF_weightUp', 'puweightDown', 'UEPS_FSRDown', 'PDFaS_weightUp', 'PDFaS_weightDown', 'scalevar_muFUp', 'ele_IDUp', 'scalevar_muR_muFUp', 'ele_IDDown', 'PDF_weightDown', 'ele_RecoUp', 'scalevar_muR_muFDown', 'scalevar_muFDown', 'aS_weightUp', 'puweightUp', 'scalevar_muRUp', 'UEPS_ISRUp', 'UEPS_FSRUp', 'JESUp', 'JESDown', 'JERUp', 'JERDown'],
+        "24":['nominal', 'puweightDown', 'scalevar_muFDown', 'UEPS_FSRUp', 'aS_weightUp', 'scalevar_muR_muFDown', 'UEPS_ISRUp', 'PDF_weightDown', 'puweightUp', 'scalevar_muRDown', 'PDFaS_weightDown', 'scalevar_muR_muFUp', 'UEPS_ISRDown', 'scalevar_muFUp', 'aS_weightDown', 'PDF_weightUp', 'UEPS_FSRDown', 'PDFaS_weightUp', 'scalevar_muRUp', 'JESUp', 'JESDown', 'JERUp', 'JERDown','mu_IDDown', 'mu_IsoDown', 'mu_IDUp', 'mu_IsoUp'],
+        }
 lep = "mue"
 dict_dataframes = {}
 
@@ -210,7 +216,7 @@ for syst in systs[era]:
     full_MC = sumhist(inf_MC, histn)
     for hnm in histn:
         single_MC[hnm] = deepcopy(inf_MC.Get(hnm))
-        print(scale*single_MC[hnm].Integral())
+        print(hnm, scale*single_MC[hnm].Integral())
         
     inf_MC.Close()
 
@@ -219,13 +225,13 @@ for syst in systs[era]:
     full_MC_c = sumhist(inf_MC_c, histn)
     for hnm in histn:
         single_MC_c[hnm] = deepcopy(inf_MC_c.Get(hnm))
-        print(scale*single_MC_c[hnm].Integral())
+        print(hnm, scale*single_MC_c[hnm].Integral())
     inf_MC_c.Close()
 
     inf_data = rt.TFile.Open(f"{path[lep]}{bvar}_{era}_histdata.root")
     full_h_data = deepcopy(inf_data.Get('data'))
 
-    print(scale*full_MC.Integral(), full_h_data.Integral())
+    print("full MC ", scale*full_MC.Integral(), " DATA ", full_h_data.Integral())
 
     print("W+c & ", round(single_MC_c["WJets"].Integral()/full_MC.Integral()*100, 1),"\% \\\\")
     for hnm in histn:
@@ -259,7 +265,8 @@ print(final_dataframes)
 taggerName = {
     "DeepFlav": "deepJet",
     "RobustParTAK4": "robustParticleTransformer",
-    "PNet": "particleNet"
+    "PNet": "particleNet",
+    "UParTAK4": "UParTAK4"
 }
 if not os.path.exists(era):
     os.system(f"mkdir {era}")

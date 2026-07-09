@@ -4,6 +4,7 @@ import os
 
 eras = ['22', '22EE']
 eras = ['23', '23BP']
+eras = ['24']
 
 input_folder = {'mu22':'/eos/user/a/adeiorio/btv_ctag_SF/v4/hist/',
                 'e22':'/eos/user/a/adeiorio/btv_ctag_SF/v2e/hist/',
@@ -12,18 +13,23 @@ input_folder = {'mu22':'/eos/user/a/adeiorio/btv_ctag_SF/v4/hist/',
                 'mu23':'/eos/user/a/adeiorio/btv_ctag_SF/Summer23/v8/hist/',
                 'e23':'/eos/user/a/adeiorio/btv_ctag_SF/Summer23/v8e/hist/',
                 'mu23BP':'/eos/user/a/adeiorio/btv_ctag_SF/Summer23BPix/v8/hist/',
-                'e23BP':'/eos/user/a/adeiorio/btv_ctag_SF/Summer23BPix/v8e/hist/'
+                'e23BP':'/eos/user/a/adeiorio/btv_ctag_SF/Summer23BPix/v8e/hist/',
+                'e24':'/eos/user/a/adeiorio/btv_ctag_SF/Summer24/v2e/hist/',
+                'mu24':'/eos/user/a/adeiorio/btv_ctag_SF/Summer24/v2/hist/',
                 }
 taggers = ['DeepFlav', 'RobustParTAK4', 'PNet']
+taggers = ['UParTAK4']
 WPs = ['L', 'M', 'T', 'XT']
 
 variations = ['Down', 'Up']
 corr_systs = {'22':['puweight', 'UES', 'JER', 'JES'],
-              '23':['puweight', 'UES', 'JER', 'JES', 'UEPS_ISR', 'UEPS_FSR', 'PDF_weight', 'aS_weight', 'scalevar_muR_muF', 'PDFaS_weight', 'scalevar_muR', 'scalevar_muF']
+              '23':['puweight', 'UES', 'JER', 'JES', 'UEPS_ISR', 'UEPS_FSR', 'PDF_weight', 'aS_weight', 'scalevar_muR_muF', 'PDFaS_weight', 'scalevar_muR', 'scalevar_muF'],
+              '24':['puweight', 'ttbar_weight', 'JER', 'JES', 'UEPS_ISR', 'UEPS_FSR', 'PDF_weight', 'aS_weight', 'scalevar_muR_muF', 'PDFaS_weight', 'scalevar_muR', 'scalevar_muF'],
               }
 uncorr_systs_mu = ['mu_ID', 'mu_Iso']
-uncorr_systs_ele = {'22':['ele_ID', 'ele_Reco_med'],
-                    '23': ['ele_ID', 'ele_Reco']
+uncorr_systs_ele = {'22': ['ele_ID', 'ele_Reco_med'],
+                    '23': ['ele_ID', 'ele_Reco'],
+                    '24': []
                     }
 
 hist_types = ['c_histMC', 'histMC']

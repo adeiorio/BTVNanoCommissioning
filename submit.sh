@@ -1,4 +1,6 @@
-ver="v2"
+# v3 is with soft muon pt>30 GeV
+#v4 is with soft muon pt>35 GeV
+ver="v4"
 syst="--isSyst all" #"" #
 extra="" #"--condorFileSize 2"
 year="2024"
@@ -9,9 +11,11 @@ python condor/submitter.py --workflow ctag_Wc_WP_sf --json metadata/${campaign}/
 #python condor/submitter.py --workflow ctag_Wc_WP_sf --json metadata/${campaign}/MC_WJ_mcatnlo.json --campaign ${campaign} --year ${year} --jobName MC_${campaign}_$ver --outputDir root://eosuser.cern.ch///eos/user/a/adeiorio/btv_ctag_SF/${campaign}/$ver/MC_WJnlo/ $syst --overwrite
 #dataMu_${campaign}.json
 python condor/submitter.py --workflow ctag_Wc_WP_sf --json metadata/${campaign}/dataMu_${campaign}.json  --campaign ${campaign} --year ${year} --jobName data_${campaign}_$ver --outputDir root://eosuser.cern.ch///eos/user/a/adeiorio/btv_ctag_SF/${campaign}/$ver/data --overwrite $extra
+#python condor/submitter.py --workflow ctag_Wc_WP_sf --json metadata/${campaign}/DY_lowmass.json --campaign ${campaign} --year ${year} --jobName MCDY_${campaign}_${ver} --outputDir root://eosuser.cern.ch///eos/user/a/adeiorio/btv_ctag_SF/${campaign}/${ver}/MC_DY/ $syst --overwrite
 # ************* electron *************
 #python condor/submitter.py --workflow ectag_Wc_WP_sf --json metadata/${campaign}/MC_WJ_mcatnlo.json --campaign ${campaign} --year ${year} --jobName MC_${campaign}_${ver}e --outputDir root://eosuser.cern.ch///eos/user/a/adeiorio/btv_ctag_SF/${campaign}/${ver}e/MC_WJnlo/ $syst --overwrite
 python condor/submitter.py --workflow ectag_Wc_WP_sf --json metadata/${campaign}/MC_${campaign}.json --campaign ${campaign} --year ${year} --jobName MC_${campaign}_${ver}e --outputDir root://eosuser.cern.ch///eos/user/a/adeiorio/btv_ctag_SF/${campaign}/${ver}e/MC/ $syst --overwrite
+#python condor/submitter.py --workflow ectag_Wc_WP_sf --json metadata/${campaign}/DY_lowmass.json --campaign ${campaign} --year ${year} --jobName MCDY_${campaign}_${ver}e --outputDir root://eosuser.cern.ch///eos/user/a/adeiorio/btv_ctag_SF/${campaign}/${ver}e/MC_DY/ $syst --overwrite
 #dataEle_${campaign}.json metadata/Summer24/MC_WJ_mcatnlo.json
 python condor/submitter.py --workflow ectag_Wc_WP_sf --json metadata/${campaign}/dataEle_${campaign}.json --campaign ${campaign} --year ${year} --jobName data_${campaign}_${ver}e --outputDir root://eosuser.cern.ch///eos/user/a/adeiorio/btv_ctag_SF/${campaign}/${ver}e/data  --overwrite $extra
 #python condor/submitter.py --workflow ectag_Wc_WP_sf --json Summer24_dataEle_v1e_failed_dataset.json --campaign ${campaign} --year ${year} --jobName data_${campaign}_${ver}e --outputDir root://eosuser.cern.ch///eos/user/a/adeiorio/btv_ctag_SF/${campaign}/${ver}e/data  --overwrite $extra --condorFileSize 1
